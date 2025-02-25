@@ -1,3 +1,5 @@
+# src/routes/trip_routes.py
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from src.utils.db import get_db
@@ -21,10 +23,10 @@ def create_trip():
         "endDate": data.get("endDate"),
         "flights": data.get("flights"),
         "accommodation": data.get("accommodation"),
-        "familyAttending": data.get("familyAttending", []),  # default to empty array if not provided
+        "familyAttending": data.get("familyAttending", []),
         "budget": data.get("budget"),
         "notes": data.get("notes"),
-        "itinerary": data.get("itinerary", [])  # also default to empty array
+        "itinerary": data.get("itinerary", [])
     }
 
     result = db.trips.insert_one(trip)
@@ -52,6 +54,28 @@ def get_trips():
     return jsonify(trips), 200
 
 
+@trip_bp.route("/trips/<trip_id>", methods=["GET"])
+@jwt_required()
+def get_trip(trip_id):
+    """Get a single trip by ID if it belongs to the logged-in user."""
+    db = get_db()
+    user_id = get_jwt_identity()
+
+    # Attempt to find the trip with the correct userId
+    trip = db.trips.find_one({
+        "_id": ObjectId(trip_id),
+        "userId": ObjectId(user_id)
+    })
+
+    if not trip:
+        return jsonify({"error": "Trip not found"}), 404
+
+    trip["_id"] = str(trip["_id"])
+    trip["userId"] = str(trip["userId"])
+
+    return jsonify(trip), 200
+
+
 @trip_bp.route("/trips/<trip_id>", methods=["PATCH"])
 @jwt_required()
 def update_trip(trip_id):
@@ -60,6 +84,7 @@ def update_trip(trip_id):
     user_id = get_jwt_identity()
     data = request.json
 
+    
     # Attempt to update only the trip that belongs to this user
     result = db.trips.update_one(
         {"_id": ObjectId(trip_id), "userId": ObjectId(user_id)},
@@ -67,7 +92,7 @@ def update_trip(trip_id):
     )
 
     if result.modified_count == 0:
-        # Either trip doesn't exist, or user doesn't own it, or no fields actually changed
+        # Either trip doesn't exist, user doesn't own it, or no fields changed
         return jsonify({"error": "No trip updated"}), 404
 
     # Re-fetch the updated trip so we can return it
@@ -93,4 +118,5 @@ def delete_trip(trip_id):
         return jsonify({"error": "No trip deleted"}), 404
 
     return jsonify({"success": True}), 200
+
 
