@@ -79,20 +79,20 @@ def get_trip(trip_id):
 @trip_bp.route("/trips/<trip_id>", methods=["PATCH"])
 @jwt_required()
 def update_trip(trip_id):
-    """Update fields of an existing trip."""
     db = get_db()
     user_id = get_jwt_identity()
     data = request.json
 
-    
-    # Attempt to update only the trip that belongs to this user
+    # Remove immutable fields from update payload
+    data.pop("_id", None)
+    data.pop("userId", None)  # Ensure userId is not updated
+
     result = db.trips.update_one(
         {"_id": ObjectId(trip_id), "userId": ObjectId(user_id)},
         {"$set": data}
     )
 
     if result.modified_count == 0:
-        # Either trip doesn't exist, user doesn't own it, or no fields changed
         return jsonify({"error": "No trip updated"}), 404
 
     # Re-fetch the updated trip so we can return it
@@ -100,9 +100,10 @@ def update_trip(trip_id):
     if not updated_trip:
         return jsonify({"error": "Trip not found after update"}), 404
 
+    # Convert ObjectIds to strings for JSON response (for display only)
     updated_trip["_id"] = str(updated_trip["_id"])
     updated_trip["userId"] = str(updated_trip["userId"])
-
+    
     return jsonify(updated_trip), 200
 
 
