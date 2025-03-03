@@ -118,14 +118,24 @@ def get_recommendations():
         # Return up to 10 recommendations with selected fields.
         recommendations = []
         for place in filtered_results[:10]:
+            # Construct photo URL if available
+            photos = place.get("photos", [])
+            photo_url = None
+            if photos:
+                photo_reference = photos[0].get("photo_reference")
+                if photo_reference:
+                    photo_url = (
+                        f"https://maps.googleapis.com/maps/api/place/photo?"
+                        f"maxwidth=400&photoreference={photo_reference}&key={api_key}"
+                    )
             recommendations.append({
                 "name": place.get("name"),
                 "formatted_address": place.get("formatted_address"),
                 "rating": place.get("rating"),
                 "types": place.get("types"),
-                "place_id": place.get("place_id")
+                "place_id": place.get("place_id"),
+                "photo_url": photo_url
             })
-
         return jsonify({"recommendations": recommendations}), 200
 
     except Exception as e:
