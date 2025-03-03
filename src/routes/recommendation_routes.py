@@ -1,7 +1,6 @@
 # src/routes/recommendation_routes.py
 import logging
 from flask import Blueprint, request, jsonify
-import requests
 import os
 
 recommendation_bp = Blueprint("recommendation_bp", __name__)
