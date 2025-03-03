@@ -2,6 +2,7 @@
 import logging
 from flask import Blueprint, request, jsonify
 import os
+import requests
 
 recommendation_bp = Blueprint("recommendation_bp", __name__)
 
