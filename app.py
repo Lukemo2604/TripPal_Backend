@@ -12,6 +12,7 @@ from src.utils.db import init_db
 from src.routes.auth_routes import auth_bp
 from src.routes.user_routes import user_bp
 from src.routes.trip_routes import trip_bp
+from src.routes.recommendation_routes import recommendation_bp
 
 load_dotenv()  # loads variables from .env (e.g., MONGO_URI, JWT_SECRET_KEY)
 
@@ -35,6 +36,7 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix="/api")
     app.register_blueprint(user_bp, url_prefix="/api")
     app.register_blueprint(trip_bp, url_prefix="/api")
+    app.register_blueprint(recommendation_bp, url_prefix="/api")
 
     return app
 
