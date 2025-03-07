@@ -8,15 +8,7 @@ recommendation_bp = Blueprint("recommendation_bp", __name__)
 
 @recommendation_bp.route("/recommendations", methods=["POST"])
 def get_recommendations():
-    """
-    Expects JSON like:
-    {
-      "city": "New York",
-      "userPreferences": ["drinking", "museum"],
-      "familyPreferences": ["shopping"],
-      ...
-    }
-    """
+    
     try:
         data = request.get_json() or {}
         city = data.get("city", "").strip()
@@ -57,12 +49,7 @@ def get_recommendations():
 
         results = response.json().get("results", [])
 
-        # =========== 2A. OPTIONAL: If you have 'dislikes', you can filter them out here ===========
 
-        # =========== 2B. Re-rank results by weighting user preferences vs. family preferences ===========
-
-        # We'll define a function to count how many preferences each place matches.
-        # We'll match them against place "types" and "name" (and optionally "formatted_address").
         def count_matches(place, prefs):
             score = 0
             place_name = place.get("name", "").lower()

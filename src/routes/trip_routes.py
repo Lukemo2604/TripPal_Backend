@@ -1,5 +1,5 @@
-# src/routes/trip_routes.py
-
+import os
+import requests
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from src.utils.db import get_db
@@ -14,7 +14,32 @@ def create_trip():
     db = get_db()
     user_id = get_jwt_identity()
     data = request.json
+    GOOGLE_MAPS_KEY= os.getenv("GOOGLE_PLACES_API_KEY")
 
+    location= data.get("location")
+    places_url = "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
+    params = {
+        "input": location,
+        "inputtype": "textquery",
+        "fields": "photos,place_id",
+        "key": GOOGLE_MAPS_KEY
+    }
+    response = requests.get(places_url, params=params)
+    result = response.json()
+    print("places ", result)
+
+    image_url = ""
+    if result.get("candidates"):
+        candidate = result["candidates"][0]
+        if "photos" in candidate:
+            photo_ref = candidate["photos"][0]["photo_reference"]
+            # Build the photo URL using the key from the environment
+            image_url = f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference={photo_ref}&key={GOOGLE_MAPS_KEY}"
+        else:
+            print("No photos found for candidate.")
+    else:
+        print("No candidates found for location:", location)
+   
     # Build the trip document according to your schema
     trip = {
         "userId": ObjectId(user_id),
@@ -26,7 +51,8 @@ def create_trip():
         "familyAttending": data.get("familyAttending", []),
         "budget": data.get("budget"),
         "notes": data.get("notes"),
-        "itinerary": data.get("itinerary", [])
+        "itinerary": data.get("itinerary", []),
+        "image": image_url
     }
 
     result = db.trips.insert_one(trip)
